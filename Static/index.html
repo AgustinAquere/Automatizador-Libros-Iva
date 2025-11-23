@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador de Libros IVA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        select, input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        select:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        option:disabled {
+            color: #ccc;
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-label:hover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+
+        .file-upload-label.has-file {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .file-upload-label.drag-over {
+            background: #ffebee;
+            border-color: #f44336;
+            border-width: 3px;
+            transform: scale(1.02);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .status-message.warning {
+            background: #fff3e0;
+            color: #e65100;
+            border-left: 4px solid #ff9800;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            color: #1565c0;
+            font-size: 13px;
+        }
+
+        .confirmation-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirmation-dialog.show {
+            display: flex;
+        }
+
+        .dialog-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .dialog-content h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .dialog-content p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .inline-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .inline-group .form-group {
+            flex: 1;
+        }
+
+        .inline-group button {
+            flex: 0 0 auto;
+            padding: 12px 20px;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .client-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .client-buttons button {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Procesador de Libros IVA</h1>
+            <p>Automatiza la limpieza y organización de tus libros de IVA</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box" id="connectionStatus">
+                <p>🔄 Verificando conexión con Google Drive...</p>
+            </div>
+
+            <div class="info-box" style="background: #fff3e0; border-left-color: #ff9800;">
+                <p><strong>💡 Procesamiento automático:</strong></p>
+                <p>• Detecta cliente por CUIT</p>
+                <p>• Detecta tipo (Ventas/Compras)</p>
+                <p>• Detecta mes y año</p>
+                <p>• Convierte Notas de Crédito a negativos</p>
+                <p>• Multiplica por tipo de cambio</p>
+            </div>
+
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="client">Cliente *</label>
+                    <div style="display: flex; gap: 10px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <select id="client" name="client" required>
+                                <option value="">Cargando clientes...</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="openAddClientModal()" style="flex: 0 0 auto; padding: 12px 20px;">
+                            ➕ Nuevo
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="openEditClientModal()" style="flex: 0 0 auto; padding: 12px 20px;">
+                            ✏️ Editar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo">Tipo de Libro *</label>
+                    <select id="tipo" name="tipo" required>
+                        <option value="">Seleccione...</option>
+                        <option value="ventas">Ventas</option>
+                        <option value="compras">Compras</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="year">Año *</label>
+                    <input type="number" id="year" name="year" min="2020" max="2030" required>
+                </div>
+
+                <div class="inline-group">
+                    <div class="form-group">
+                        <label for="month">Mes *</label>
+                        <select id="month" name="month" required>
+                            <option value="">Seleccione...</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <button type="button" id="autoDetectBtn" class="btn-secondary">
+                        🔍 Autodetectar
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label for="file">Archivo Excel *</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="file" name="file" accept=".xlsx,.xls" required>
+                        <label for="file" class="file-upload-label" id="fileLabel">
+                            📁 Click para seleccionar archivo Excel<br>
+                            <small style="opacity: 0.7;">o arrastre el archivo aquí</small>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" id="previewBtn" class="btn-secondary">
+                        👁️ Vista Previa
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        ✅ Procesar y Subir
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Procesando...</p>
+            </div>
+
+            <div class="status-message" id="statusMessage"></div>
+        </div>
+    </div>
+
+    <div class="confirmation-dialog" id="confirmDialog">
+        <div class="dialog-content">
+            <h3>⚠️ Archivo no encontrado</h3>
+            <p id="confirmMessage"></p>
+            <div class="dialog-buttons">
+                <button type="button" class="btn-secondary" onclick="closeConfirmDialog()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-primary" onclick="confirmCreate()">
+                    Crear Archivo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="confirmation-dialog" id="addClientModal">
+        <div class="dialog-content">
+            <h3>➕ Agregar Nuevo Cliente</h3>
+            <form id="addClientForm" onsubmit="handleAddClient(event)">
+                <div class="form-group">
+                    <label for="newClientName">Nombre del Cliente *</label>
+                    <input type="text" id="newClientName" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="newClientCuit">CUIT *</label>
+                    <input type="text" id="newClientCuit" required pattern="\d{11}" maxlength="11" placeholder="30716820080" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <small style="color: #666;">Ingrese 11 dígitos sin guiones</small>
+                </div>
+                <div class="dialog-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeAddClientModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        Crear Cliente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="confirmation-dialog" id="editClientModal">
+        <div class="dialog-content">
+            <h3>✏️ Editar Cliente</h3>
+            <form id="editClientForm" onsubmit="handleEditClient(event)">
+                <input type="hidden" id="editClientOldCuit">
+                <div class="form-group">
+                    <label for="editClientName">Nombre del Cliente *</label>
+                    <input type="text" id="editClientName" required style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div class="form-group">
+                    <label for="editClientCuit">CUIT *</label>
+                    <input type="text" id="editClientCuit" required pattern="\d{11}" maxlength="11" placeholder="30716820080" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <small style="color: #666;">Ingrese 11 dígitos sin guiones</small>
+                </div>
+                <div class="dialog-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeEditClientModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let clients = [];
+        let pendingFormData = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkConnection();
+            await loadClients();
+            setupEventListeners();
+            setCurrentYear();
+        });
+
+        async function checkConnection() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                const statusEl = document.getElementById('connectionStatus');
+                
+                if (data.drive_connected) {
+                    statusEl.innerHTML = `<p>✅ Conectado a Google Drive - ${data.clients_count} clientes disponibles</p>`;
+                    statusEl.style.background = '#e8f5e9';
+                } else {
+                    statusEl.innerHTML = `<p>⚠️ Error al conectar con Drive: ${data.error}</p>`;
+                    statusEl.style.background = '#ffebee';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.innerHTML = `<p>❌ Error de conexión: ${error.message}</p>`;
+                statusEl.style.background = '#ffebee';
+            }
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients');
+                const data = await response.json();
+                
+                if (data.success) {
+                    clients = data.clients;
+                    const select = document.getElementById('client');
+                    select.innerHTML = '<option value="">Seleccione un cliente...</option>';
+                    
+                    clients.forEach(client => {
+                        const option = document.createElement('option');
+                        option.value = client.name;
+                        option.textContent = client.name;
+                        option.setAttribute('data-cuit', client.id); // Guardar CUIT en atributo
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showMessage('Error al cargar clientes: ' + error.message, 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            const fileInput = document.getElementById('file');
+            const fileLabel = document.getElementById('fileLabel');
+            
+            // Evento change del input
+            fileInput.addEventListener('change', (e) => {
+                handleFileSelect(e.target.files);
+            });
+
+            // Prevenir comportamiento por defecto del drag & drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileLabel.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            // Highlight cuando se arrastra sobre la zona
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileLabel.addEventListener(eventName, () => {
+                    fileLabel.classList.add('drag-over');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileLabel.addEventListener(eventName, () => {
+                    fileLabel.classList.remove('drag-over');
+                }, false);
+            });
+
+            // Manejar el drop
+            fileLabel.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    // Validar que sea Excel
+                    const file = files[0];
+                    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                        // Asignar al input
+                        fileInput.files = files;
+                        handleFileSelect(files);
+                    } else {
+                        showMessage('⚠️ Por favor seleccione un archivo Excel (.xlsx o .xls)', 'warning');
+                    }
+                }
+            }, false);
+
+            document.getElementById('autoDetectBtn').addEventListener('click', autoDetectMonth);
+            document.getElementById('previewBtn').addEventListener('click', showPreview);
+            document.getElementById('uploadForm').addEventListener('submit', handleSubmit);
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleFileSelect(files) {
+            if (files.length > 0) {
+                fileLabel.textContent = '✅ ' + files[0].name;
+                fileLabel.classList.add('has-file');
+            } else {
+                fileLabel.innerHTML = '📁 Click para seleccionar archivo Excel<br><small style="opacity: 0.7;">o arrastre el archivo aquí</small>';
+                fileLabel.classList.remove('has-file');
+            }
+        }
+
+        function setCurrentYear() {
+            const yearInput = document.getElementById('year');
+            yearInput.value = new Date().getFullYear();
+        }
+
+        async function autoDetectMonth() {
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                showMessage('Por favor seleccione un archivo primero', 'warning');
+                return;
+            }
+
+            showLoading(true);
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/auto-detect-all', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Llenar campos automáticamente
+                    document.getElementById('month').value = data.month;
+                    document.getElementById('year').value = data.year;
+                    document.getElementById('tipo').value = data.tipo;
+                    
+                    if (data.client_found) {
+                        document.getElementById('client').value = data.client;
+                        showMessage(
+                            `✅ Datos detectados:<br>` +
+                            `<small>• Cliente: ${data.client}<br>` +
+                            `• Tipo: ${data.tipo === 'ventas' ? 'Ventas' : 'Compras'}<br>` +
+                            `• Período: ${data.month_name} ${data.year}</small>`,
+                            'success'
+                        );
+                    } else {
+                        showMessage(
+                            `⚠️ Cliente no encontrado (CUIT: ${data.cuit})<br>` +
+                            `<small>Los demás datos fueron detectados:<br>` +
+                            `• Tipo: ${data.tipo === 'ventas' ? 'Ventas' : 'Compras'}<br>` +
+                            `• Período: ${data.month_name} ${data.year}<br><br>` +
+                            `Por favor agregue el cliente o selecciónelo manualmente</small>`,
+                            'warning'
+                        );
+                    }
+                }
+            } catch (error) {
+                showMessage('Error al detectar datos: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function openAddClientModal() {
+            document.getElementById('addClientModal').classList.add('show');
+        }
+
+        function closeAddClientModal() {
+            document.getElementById('addClientModal').classList.remove('show');
+            document.getElementById('addClientForm').reset();
+        }
+
+        function openEditClientModal() {
+            const clientSelect = document.getElementById('client');
+            const selectedClient = clientSelect.value;
+            
+            if (!selectedClient) {
+                showMessage('Por favor seleccione un cliente primero', 'warning');
+                return;
+            }
+            
+            // Obtener el CUIT del cliente seleccionado
+            const selectedOption = clientSelect.options[clientSelect.selectedIndex];
+            const cuit = selectedOption.getAttribute('data-cuit');
+            
+            // Llenar el formulario
+            document.getElementById('editClientOldCuit').value = cuit;
+            document.getElementById('editClientName').value = selectedClient;
+            document.getElementById('editClientCuit').value = cuit;
+            
+            document.getElementById('editClientModal').classList.add('show');
+        }
+
+        function closeEditClientModal() {
+            document.getElementById('editClientModal').classList.remove('show');
+            document.getElementById('editClientForm').reset();
+        }
+
+        async function handleAddClient(event) {
+            event.preventDefault();
+            
+            const clientName = document.getElementById('newClientName').value;
+            const cuit = document.getElementById('newClientCuit').value;
+            
+            showLoading(true);
+            closeAddClientModal();
+            
+            try {
+                const formData = new FormData();
+                formData.append('client_name', clientName);
+                formData.append('cuit', cuit);
+                
+                const response = await fetch('/api/create-client', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    // Recargar lista de clientes
+                    await loadClients();
+                    // Seleccionar el nuevo cliente
+                    document.getElementById('client').value = clientName;
+                } else {
+                    showMessage('⚠️ ' + (data.detail || data.message), 'warning');
+                }
+            } catch (error) {
+                showMessage('❌ Error al crear cliente: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleEditClient(event) {
+            event.preventDefault();
+            
+            const oldCuit = document.getElementById('editClientOldCuit').value;
+            const newName = document.getElementById('editClientName').value;
+            const newCuit = document.getElementById('editClientCuit').value;
+            
+            showLoading(true);
+            closeEditClientModal();
+            
+            try {
+                const formData = new FormData();
+                formData.append('old_cuit', oldCuit);
+                formData.append('new_name', newName);
+                formData.append('new_cuit', newCuit);
+                
+                const response = await fetch('/api/edit-client', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage(`✅ ${data.message}`, 'success');
+                    // Recargar lista de clientes
+                    await loadClients();
+                    // Seleccionar el cliente editado
+                    document.getElementById('client').value = newName;
+                } else {
+                    showMessage('⚠️ ' + (data.detail || data.message), 'warning');
+                }
+            } catch (error) {
+                showMessage('❌ Error al editar cliente: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function showPreview() {
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                showMessage('Por favor seleccione un archivo primero', 'warning');
+                return;
+            }
+
+            showLoading(true);
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/preview', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage(
+                        `📊 Vista previa generada:<br>` +
+                        `<small>• ${data.total_rows} filas procesadas<br>` +
+                        `• ${data.columns_kept} columnas mantenidas<br>` +
+                        `• Columnas vacías eliminadas<br>` +
+                        `• Notas de crédito convertidas a negativos</small>`,
+                        'info'
+                    );
+                } else {
+                    showMessage('Error en vista previa: ' + (data.detail || 'Error desconocido'), 'error');
+                }
+            } catch (error) {
+                showMessage('Error en vista previa: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            // Agregar month_name
+            const monthSelect = document.getElementById('month');
+            const monthName = monthSelect.options[monthSelect.selectedIndex].text;
+            formData.append('month_name', monthName);
+            formData.append('create_if_not_exists', 'false');
+
+            // Guardar FormData para posible confirmación
+            // No podemos guardar el FormData directamente, guardamos los valores
+            pendingFormData = {
+                file: document.getElementById('file').files[0],
+                client: formData.get('client'),
+                tipo: formData.get('tipo'),
+                year: formData.get('year'),
+                month: formData.get('month'),
+                month_name: monthName
+            };
+            
+            await submitForm(formData);
+        }
+
+        async function submitForm(formData) {
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Intentar parsear la respuesta
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    showMessage('Error al procesar la respuesta del servidor', 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                if (response.status === 400) {
+                    // Error controlado (ej: pestaña ya existe)
+                    showMessage('⚠️ ' + data.detail, 'warning');
+                } else if (response.status === 500) {
+                    // Error del servidor
+                    showMessage('❌ Error en el servidor: ' + data.detail, 'error');
+                } else if (data.needs_confirmation) {
+                    // Necesita confirmación para crear archivo
+                    showLoading(false);
+                    showConfirmDialog(data.message);
+                    return;
+                } else if (data.success) {
+                    // Éxito!
+                    showMessage(
+                        `✅ ${data.message}<br><small>Filas procesadas: ${data.rows_processed}</small>`,
+                        'success'
+                    );
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('fileLabel').innerHTML = '📁 Click para seleccionar archivo Excel<br><small style="opacity: 0.7;">o arrastre el archivo aquí</small>';
+                    document.getElementById('fileLabel').classList.remove('has-file');
+                    pendingFormData = null;
+                } else {
+                    // Otro tipo de respuesta
+                    showMessage(data.message || 'Respuesta inesperada del servidor', 'warning');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('❌ Error de conexión: ' + error.message, 'error');
+            } finally {
+                if (!document.getElementById('confirmDialog').classList.contains('show')) {
+                    showLoading(false);
+                }
+            }
+        }
+
+        function showConfirmDialog(message) {
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmDialog').classList.add('show');
+        }
+
+        function closeConfirmDialog() {
+            document.getElementById('confirmDialog').classList.remove('show');
+        }
+
+        async function confirmCreate() {
+            closeConfirmDialog();
+            showLoading(true);
+            
+            if (pendingFormData) {
+                // Recrear el FormData con todos los datos
+                const newFormData = new FormData();
+                newFormData.append('file', pendingFormData.file);
+                newFormData.append('client', pendingFormData.client);
+                newFormData.append('tipo', pendingFormData.tipo);
+                newFormData.append('year', pendingFormData.year);
+                newFormData.append('month', pendingFormData.month);
+                newFormData.append('month_name', pendingFormData.month_name);
+                newFormData.append('create_if_not_exists', 'true');
+                
+                await submitForm(newFormData);
+                pendingFormData = null;
+            } else {
+                showLoading(false);
+                showMessage('Error: No hay datos pendientes', 'error');
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('uploadForm').style.display = show ? 'none' : 'block';
+        }
+
+        function showMessage(message, type) {
+            const msgEl = document.getElementById('statusMessage');
+            msgEl.innerHTML = message;
+            msgEl.className = 'status-message ' + type;
+            msgEl.style.display = 'block';
+            
+            setTimeout(() => {
+                msgEl.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
