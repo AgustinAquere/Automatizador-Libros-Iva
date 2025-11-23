@@ -1,6 +1,7 @@
-# Archivos de autenticación - NO SUBIR
+# Archivos de autenticacion - NO SUBIR
 credentials.json
 token.pickle
+cuit_mapping.json
 
 # Archivos temporales
 temp/
