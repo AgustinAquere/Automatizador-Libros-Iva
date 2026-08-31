@@ -143,6 +143,10 @@ class ExcelProcessor:
             raise ValueError("No se encontraron fechas válidas en el archivo")
 
         # Encontrar el mes más frecuente
+        # Le indicamos que el DÍA va primero (formato DD/MM/AAAA de AFIP)
+        df_temp['Fecha'] = pd.to_datetime(df_temp['Fecha'], dayfirst=True, errors='coerce')
+
+        # Ahora el conteo de meses va a ser el correcto
         month_counts = df_temp['Fecha'].dt.month.value_counts()
         most_common_month = month_counts.idxmax()
 
@@ -223,7 +227,10 @@ class ExcelProcessor:
             # Ya es string, no hacer nada
             pass
         else:
-            # Es datetime, convertir a string
+            # 1. Aseguramos que Pandas entienda que son fechas con formato de nuestro país
+            df_clean['Fecha'] = pd.to_datetime(df_clean['Fecha'], dayfirst=True, errors='coerce')
+
+            # 2. Ahora sí aplicamos el formato visual de manera segura (esta es tu línea original)
             df_clean['Fecha'] = df_clean['Fecha'].dt.strftime('%d/%m/%Y')
         
         # Calcular totales para las columnas numéricas
